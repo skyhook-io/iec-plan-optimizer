@@ -1,0 +1,9 @@
+# Base Ingress component (HTTP only, no TLS).
+# Alternative approach: Use overlay-specific patches in deploy/overlays/<env>/patches/.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+- ingress.yaml
+replacements:
+  - path: ./host-replacement.yaml
+

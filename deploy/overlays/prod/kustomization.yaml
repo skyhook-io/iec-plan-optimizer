@@ -18,3 +18,5 @@ resources:
 - ../../base
 images:
 - name: ghcr.io/skyhook-io/iec-plan-optimizer
+components:
+- ../../components/ingress

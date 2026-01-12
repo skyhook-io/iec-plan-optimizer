@@ -1,0 +1,21 @@
+# Base Ingress resource for routing external HTTP traffic to the service.
+# Host placeholder (HOSTNAME_PLACEHOLDER) is replaced by Kustomize at build time with environment-specific hostname
+# set in environment-values.env (e.g., INGRESS_HOST=myservice.example.com).
+# For TLS: Use the ingress-tls component in addition to this base ingress.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: iec-plan-optimizer
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: HOSTNAME_PLACEHOLDER
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: iec-plan-optimizer
+            port:
+              number: 80

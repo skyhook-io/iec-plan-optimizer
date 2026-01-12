@@ -34,14 +34,21 @@ LegacyObjectSuffixEnabled = false
   QueryPath = ""
   CodegenTool = ""
 
+[IngressConfig]
+  Enabled = true
+  ClassName = "nginx"
+  Port = 80
+  Path = "/"
+  PathType = "Prefix"
+
 [[Environments]]
   Name = "prod"
   Namespace = "prod"
   Cluster = "us-east-1-prod"
   Location = "us-east-1"
   CloudProvider = "aws"
-  IngressEnabled = false
-  IngressHost = ""
+  IngressEnabled = true
+  IngressHost = "hashmal.skyhook.io"
   [Environments.EnvDeploymentConfig]
     AutoDeploy = true
 

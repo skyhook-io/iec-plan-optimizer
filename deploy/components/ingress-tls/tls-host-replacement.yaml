@@ -1,0 +1,14 @@
+# Kustomize replacement: Injects HOSTNAME_PLACEHOLDER from configmap into Ingress spec.tls.hosts at build time.
+# Ensures TLS certificate covers the correct hostname per environment.
+source:
+  kind: ConfigMap
+  name: iec-plan-optimizer-environment-values
+  fieldPath: data.HOSTNAME_PLACEHOLDER
+targets:
+- select:
+    kind: Ingress
+    name: iec-plan-optimizer
+  fieldPaths:
+    - spec.tls.*.hosts.[=HOSTNAME_PLACEHOLDER]
+  options:
+    create: true
