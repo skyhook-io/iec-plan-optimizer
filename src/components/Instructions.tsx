@@ -3,36 +3,15 @@
 import { motion } from 'framer-motion';
 import {
   LogIn,
-  BarChart3,
-  Calendar,
+  Navigation,
+  Mail,
   Download,
   HelpCircle,
+  ExternalLink,
 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-const steps = [
-  {
-    icon: LogIn,
-    titleKey: 'instructionsStep1' as const,
-    detailKey: 'instructionsStep1Detail' as const,
-  },
-  {
-    icon: BarChart3,
-    titleKey: 'instructionsStep2' as const,
-    detailKey: 'instructionsStep2Detail' as const,
-  },
-  {
-    icon: Calendar,
-    titleKey: 'instructionsStep3' as const,
-    detailKey: 'instructionsStep3Detail' as const,
-  },
-  {
-    icon: Download,
-    titleKey: 'instructionsStep4' as const,
-    detailKey: 'instructionsStep4Detail' as const,
-  },
-];
+import { Button } from '@/components/ui/button';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -51,6 +30,13 @@ const itemVariants = {
 
 export function Instructions() {
   const { t, isRtl } = useI18n();
+
+  const steps = [
+    { icon: LogIn, titleKey: 'instructionsStep1' as const, detailKey: 'instructionsStep1Detail' as const },
+    { icon: Navigation, titleKey: 'instructionsStep2' as const, detailKey: 'instructionsStep2Detail' as const, hasDirectLink: true },
+    { icon: Mail, titleKey: 'instructionsStep3' as const, detailKey: 'instructionsStep3Detail' as const },
+    { icon: Download, titleKey: 'instructionsStep4' as const, detailKey: 'instructionsStep4Detail' as const },
+  ];
 
   return (
     <Card>
@@ -83,6 +69,27 @@ export function Instructions() {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {t(step.detailKey)}
                 </p>
+                {step.hasDirectLink && (
+                  <div className="mt-2 space-y-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                    >
+                      <a
+                        href="https://www.iec.co.il/consumption-info-menu/remote-reading-info"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t('instructionsDirectLink')}
+                        <ExternalLink className="ms-1.5 h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      {t('instructionsStep2Path')}
+                    </p>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
@@ -90,7 +97,7 @@ export function Instructions() {
           {/* No smart meter note */}
           <motion.div
             variants={itemVariants}
-            className="mt-6 flex items-start gap-4 rounded-lg bg-muted/50 p-4"
+            className="mt-4 flex items-start gap-4 rounded-lg bg-muted/50 p-4"
           >
             <HelpCircle className="h-5 w-5 shrink-0 text-muted-foreground" />
             <div>

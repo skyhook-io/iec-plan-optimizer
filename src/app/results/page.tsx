@@ -8,14 +8,12 @@ import {
   ArrowLeft,
   ArrowRight,
   Calendar,
-  FileText,
   MapPin,
   User,
 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { useAppStore } from '@/lib/store';
 import { PlanCard } from '@/components/PlanCard';
-import { UsageChart } from '@/components/UsageChart';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { TopPicksComparison } from '@/components/TopPicksComparison';
 import { Button } from '@/components/ui/button';
@@ -177,35 +175,16 @@ export default function ResultsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        {t('totalRecords')}
-                      </p>
-                      <p className="font-medium">
-                        {usageData.records.length.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Usage Chart */}
-            <motion.div
-              initial={{ opacity: 0, x: isRtl ? 20 : -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <UsageChart usageData={usageData} topPlan={timeOfUsePlans[0]} />
-            </motion.div>
           </div>
 
           {/* Main Content - Plan Results */}
           <div className="lg:col-span-2">
             {/* Top Picks Comparison */}
-            <TopPicksComparison topPlans={filteredResults} />
+            <TopPicksComparison topPlans={filteredResults} usageData={usageData} />
 
             <motion.div
               initial={{ opacity: 0, x: isRtl ? -20 : 20 }}
@@ -235,7 +214,7 @@ export default function ResultsPage() {
                 </TabsList>
 
                 <TabsContent value="all">
-                  <div className="grid gap-6 md:grid-cols-2 items-stretch">
+                  <div className="grid gap-6 md:grid-cols-2 items-start">
                     {filteredResults.map((result, index) => (
                       <PlanCard
                         key={result.plan.id}
@@ -248,7 +227,7 @@ export default function ResultsPage() {
                 </TabsContent>
 
                 <TabsContent value="fixed">
-                  <div className="grid gap-6 md:grid-cols-2 items-stretch">
+                  <div className="grid gap-6 md:grid-cols-2 items-start">
                     {fixedPlans.map((result, index) => (
                       <PlanCard
                         key={result.plan.id}
@@ -262,7 +241,7 @@ export default function ResultsPage() {
 
                 <TabsContent value="tou">
                   {timeOfUsePlans.length > 0 ? (
-                    <div className="grid gap-6 md:grid-cols-2 items-stretch">
+                    <div className="grid gap-6 md:grid-cols-2 items-start">
                       {timeOfUsePlans.map((result, index) => (
                         <PlanCard
                           key={result.plan.id}

@@ -199,12 +199,13 @@ function calculatePlanResult(
 }
 
 export function calculateAllPlans(usageData: ParsedUsageData): PlanResult[] {
-  // Calculate number of months in the data period using actual calendar months
-  const startYear = usageData.startDate.getFullYear();
-  const startMonth = usageData.startDate.getMonth();
-  const endYear = usageData.endDate.getFullYear();
-  const endMonth = usageData.endDate.getMonth();
-  const numMonths = Math.max(1, (endYear - startYear) * 12 + (endMonth - startMonth));
+  // Calculate number of months in the data period
+  // Use days/30.44 (average days per month) and round to nearest integer
+  // Cap at 12 months for annual calculations
+  const daysDiff = Math.ceil(
+    (usageData.endDate.getTime() - usageData.startDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const numMonths = Math.min(12, Math.max(1, Math.round(daysDiff / 30.44)));
 
   // Calculate result for each plan
   const results = electricityPlans.map((plan) =>
@@ -234,20 +235,43 @@ export function extrapolateToAnnual(
 
   const multiplier = 365 / daysDiff;
 
-  return results.map((result) => ({
-    ...result,
-    totalUsageKwh: result.totalUsageKwh * multiplier,
-    baselineCost: result.baselineCost * multiplier,
-    discountedCost: result.discountedCost * multiplier,
-    savings: result.savings * multiplier,
-    breakdown: {
-      discountedUsageKwh: result.breakdown.discountedUsageKwh * multiplier,
-      discountedCost: result.breakdown.discountedCost * multiplier,
-      discountedSavings: result.breakdown.discountedSavings * multiplier,
-      regularUsageKwh: result.breakdown.regularUsageKwh * multiplier,
-      regularCost: result.breakdown.regularCost * multiplier,
-    },
-  }));
+  return results.map((result) => {
+    let extrapolatedSavings = result.savings * multiplier;
+    let savingsCapped = result.savingsCapped;
+    let uncappedSavings = result.uncappedSavings ? result.uncappedSavings * multiplier : undefined;
+
+    // Re-apply annual cap after extrapolation (12 months)
+    if (result.plan.maxMonthlySavings) {
+      const maxAnnualSavings = result.plan.maxMonthlySavings * 12;
+      if (extrapolatedSavings > maxAnnualSavings) {
+        if (!savingsCapped) {
+          uncappedSavings = extrapolatedSavings;
+        }
+        extrapolatedSavings = maxAnnualSavings;
+        savingsCapped = true;
+      }
+    }
+
+    const extrapolatedBaselineCost = result.baselineCost * multiplier;
+
+    return {
+      ...result,
+      totalUsageKwh: result.totalUsageKwh * multiplier,
+      baselineCost: extrapolatedBaselineCost,
+      discountedCost: extrapolatedBaselineCost - extrapolatedSavings,
+      savings: extrapolatedSavings,
+      savingsPercent: extrapolatedBaselineCost > 0 ? (extrapolatedSavings / extrapolatedBaselineCost) * 100 : 0,
+      savingsCapped,
+      uncappedSavings,
+      breakdown: {
+        discountedUsageKwh: result.breakdown.discountedUsageKwh * multiplier,
+        discountedCost: result.breakdown.discountedCost * multiplier,
+        discountedSavings: result.breakdown.discountedSavings * multiplier,
+        regularUsageKwh: result.breakdown.regularUsageKwh * multiplier,
+        regularCost: result.breakdown.regularCost * multiplier,
+      },
+    };
+  });
 }
 
 // Get usage breakdown by time period for charts

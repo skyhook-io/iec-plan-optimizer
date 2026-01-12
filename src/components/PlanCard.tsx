@@ -79,12 +79,11 @@ export function PlanCard({ result, rank, isRecommended, usageData }: PlanCardPro
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rank * 0.1 }}
       layout
-      className="h-full"
     >
       <Card
         dir={isRtl ? 'rtl' : 'ltr'}
         className={cn(
-          'relative overflow-hidden transition-shadow hover:shadow-lg cursor-pointer h-full flex flex-col',
+          'relative overflow-hidden transition-shadow hover:shadow-lg cursor-pointer',
           isRecommended && 'border-primary ring-2 ring-primary/20',
           isExpanded && 'ring-2 ring-primary/10'
         )}

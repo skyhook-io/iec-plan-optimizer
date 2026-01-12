@@ -16,7 +16,7 @@ import type { ElectricityPlan } from '@/types';
 
 interface UsageProfileChartProps {
   data: HourlyUsagePoint[];
-  plan: ElectricityPlan;
+  plan?: ElectricityPlan;
 }
 
 export function UsageProfileChart({ data, plan }: UsageProfileChartProps) {
@@ -25,17 +25,19 @@ export function UsageProfileChart({ data, plan }: UsageProfileChartProps) {
   // Get discount windows for visualization
   const discountAreas: { start: number; end: number; discount: number }[] = [];
 
-  for (const window of plan.discountWindows) {
-    // Only show weekday windows (most representative)
-    const appliesToWeekday = window.days.some(d => d >= 0 && d <= 4);
-    if (!appliesToWeekday) continue;
+  if (plan) {
+    for (const window of plan.discountWindows) {
+      // Only show weekday windows (most representative)
+      const appliesToWeekday = window.days.some(d => d >= 0 && d <= 4);
+      if (!appliesToWeekday) continue;
 
-    if (window.startHour > window.endHour) {
-      // Overnight window - split into two areas
-      discountAreas.push({ start: window.startHour, end: 24, discount: window.discount });
-      discountAreas.push({ start: 0, end: window.endHour, discount: window.discount });
-    } else {
-      discountAreas.push({ start: window.startHour, end: window.endHour, discount: window.discount });
+      if (window.startHour > window.endHour) {
+        // Overnight window - split into two areas
+        discountAreas.push({ start: window.startHour, end: 24, discount: window.discount });
+        discountAreas.push({ start: 0, end: window.endHour, discount: window.discount });
+      } else {
+        discountAreas.push({ start: window.startHour, end: window.endHour, discount: window.discount });
+      }
     }
   }
 
@@ -45,7 +47,7 @@ export function UsageProfileChart({ data, plan }: UsageProfileChartProps) {
   const maxKwh = Math.max(...data.map(d => d.avgKwh));
 
   return (
-    <div className="h-48 w-full">
+    <div className="h-32 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
@@ -115,16 +117,18 @@ export function UsageProfileChart({ data, plan }: UsageProfileChartProps) {
         </AreaChart>
       </ResponsiveContainer>
 
-      {/* Legend */}
-      <div className="mt-2 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+      {/* Legend - compact inline */}
+      <div className="mt-1 flex items-center justify-center gap-3 text-[10px] text-muted-foreground">
         <div className="flex items-center gap-1">
-          <div className="h-3 w-3 rounded bg-indigo-500/80" />
-          <span>{language === 'he' ? 'צריכה ממוצעת' : 'Avg Usage'}</span>
+          <div className="h-2 w-2 rounded bg-indigo-500/80" />
+          <span>{language === 'he' ? 'צריכה' : 'Usage'}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="h-3 w-3 rounded bg-emerald-500/30 border border-emerald-500/50 border-dashed" />
-          <span>{language === 'he' ? 'שעות הנחה' : 'Discount Hours'}</span>
-        </div>
+        {discountAreas.length > 0 && (
+          <div className="flex items-center gap-1">
+            <div className="h-2 w-2 rounded bg-emerald-500/30 border border-emerald-500/50" />
+            <span>{language === 'he' ? 'הנחה' : 'Discount'}</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -205,8 +205,6 @@ export function CsvUploader({ onSuccess }: CsvUploaderProps) {
                         <span>{formatDateRange(usageData.startDate, usageData.endDate)}</span>
                       </div>
                       <p className="text-xs">
-                        {usageData.records.length.toLocaleString()}{' '}
-                        {language === 'he' ? 'רשומות' : 'records'} •{' '}
                         {usageData.totalKwh.toFixed(0)} kWh
                       </p>
                     </div>
