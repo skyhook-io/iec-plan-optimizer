@@ -108,6 +108,7 @@ jobs:
           account: ${{ steps.cloud-provider-cluster.outputs.account }}
           location: ${{ steps.cloud-provider-cluster.outputs.location }}
           cluster: ${{ steps.cloud-provider-cluster.outputs.cluster }}
+          aws_role_to_assume: arn:aws:iam::982081053473:role/github-actions-gha-role
 
       - name: Deploy to Kubernetes
         uses: skyhook-io/kustomize-deploy@v1
