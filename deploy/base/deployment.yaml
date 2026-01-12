@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iec-plan-optimizer
+  labels:
+    app: iec-plan-optimizer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iec-plan-optimizer
+  template:
+    metadata:
+      labels:
+        app: iec-plan-optimizer
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/skyhook-io/iec-plan-optimizer:latest
+          ports:
+            - containerPort: 3000
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: NODE_ENV
+              value: production

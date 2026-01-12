@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: iec-plan-optimizer
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  tls:
+    - hosts:
+        - electricity.koalaops.com
+      secretName: iec-plan-optimizer-tls
+  rules:
+    - host: electricity.koalaops.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prod-iec-plan-optimizer
+                port:
+                  number: 80

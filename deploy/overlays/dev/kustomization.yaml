@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: dev
+
+resources:
+  - ../../base
+
+namePrefix: dev-
+
+images:
+  - name: ghcr.io/skyhook-io/iec-plan-optimizer
+    newTag: latest
+
+replicas:
+  - name: iec-plan-optimizer
+    count: 1
