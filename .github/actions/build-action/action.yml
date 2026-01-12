@@ -1,0 +1,51 @@
+name: Build
+description: Build service
+inputs:
+  for_release:
+    description: "Whether to build for release"
+    required: false
+    default: "false"
+  service_dir:
+    description: "Relative path to the service directory"
+    required: false
+    default: "."
+  service_name:
+    description: "The name of the service"
+    required: false
+  working_directory:
+    description: 'Working directory where the code is located'
+    required: false
+    default: '.'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up toolchain
+      working-directory: ${{ inputs.working_directory }}/${{ inputs.service_dir }}
+      shell: bash
+      run: echo "Setting up toolchain (replace with your own command here)";
+      # Replace with the toolchain you need for your project
+      # Example for simple Go project:
+      # uses: actions/setup-go@v5
+      # with:
+      #   go-version: "1.22"
+
+    # Install dependencies
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}/${{ inputs.service_dir }}
+      run: echo "Installing dependencies (replace with your own command here)";
+      # Replace with the command you need to install your dependencies
+      # Example for simple Go project:
+      # run: |
+      #   go mod tidy
+      #   go get .
+
+    # Build
+    - name: Build
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}/${{ inputs.service_dir }}
+      run: echo "Building (replace with your own command here)";
+      # Replace with the command you need to build your project
+      # Example for simple Go project:
+      # run: go build -v ./...

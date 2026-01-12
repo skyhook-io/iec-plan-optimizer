@@ -1,0 +1,66 @@
+ServiceName = "iec-plan-optimizer"
+Name = ""
+Description = ""
+Owners = ["nadaverell@gmail.com"]
+ServerFramework = "generic"
+ServerMain = ""
+ArtifactRepository = "ghcr.io/skyhook-io"
+Port = 80
+ContainerEnvFileName = "container.env"
+EnvironmentConfigFileName = "environment-values.env"
+LegacyIngressPatchEnabled = false
+EnvNamePrefixEnabled = false
+EnableEnvNamePrefix = false
+LegacyObjectSuffixEnabled = false
+
+[KoalaVersionInfo]
+  Version = ""
+  DeployWorkflowVersion = ""
+
+[Repo]
+  Name = "iec-plan-optimizer"
+  GitUser = "skyhook-io"
+  URL = "https://github.com/skyhook-io/iec-plan-optimizer"
+  Path = ""
+  IsMonorepo = false
+  Token = ""
+
+[TemplateConfig]
+  Repo = ""
+  Path = ""
+
+[OpenAPIConfig]
+  SpecPath = ""
+  QueryPath = ""
+  CodegenTool = ""
+
+[[Environments]]
+  Name = "prod"
+  Namespace = "prod"
+  Cluster = "us-east-1-prod"
+  Location = "us-east-1"
+  CloudProvider = "aws"
+  IngressEnabled = false
+  IngressHost = ""
+  [Environments.EnvDeploymentConfig]
+    AutoDeploy = true
+
+[SSLConfig]
+  CertName = ""
+  Issuer = ""
+  IssuerContactEmail = ""
+
+[Metrics]
+  Collector = ""
+  [Metrics.Endpoint]
+    Path = ""
+    Port = 0
+    Scheme = ""
+    Interval = ""
+
+[Tracing]
+  Backend = ""
+  URL = ""
+
+[Profiling]
+  Tool = ""

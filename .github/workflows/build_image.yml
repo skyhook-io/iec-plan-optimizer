@@ -1,0 +1,169 @@
+# Build Image Workflow
+# Builds and pushes Docker images to the configured container registry
+
+name: Build Image & Push to Registry
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag (leave empty for auto-generation)'
+        required: false
+        type: string
+      ref:
+        description: 'Git ref to build from'
+        required: false
+        type: string
+      service_dir:
+        description: 'Relative path to the service directory (without leading/trailing slashes, e.g. "apps/agent" not "/apps/agent")'
+        required: false
+        type: string
+        default: "."
+      service_name:
+        description: 'The name of the service'
+        required: false
+        type: string
+      image:
+        description: 'Full image URL without tag (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/my-service)'
+        required: false
+        type: string
+        default: 'ghcr.io/skyhook-io/iec-plan-optimizer'
+  workflow_call:
+    inputs:
+      tag:
+        description: 'The image tag to use'
+        required: false
+        type: string
+      ref:
+        description: 'The git ref to use'
+        required: false
+        type: string
+      service_dir:
+        description: 'Relative path to the service directory (without leading/trailing slashes, e.g. "apps/agent" not "/apps/agent")'
+        required: false
+        type: string
+        default: "."
+      service_name:
+        description: 'The name of the service'
+        required: false
+        type: string
+      image:
+        description: 'Full image URL without tag (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/my-service)'
+        required: false
+        type: string
+        default: 'ghcr.io/skyhook-io/iec-plan-optimizer'
+    outputs:
+      tag:
+        description: 'The image tag of the built image'
+        value: ${{ jobs.build.outputs.tag }}
+
+concurrency:
+  group: build-${{ github.ref }}-${{ inputs.service_name || 'iec-plan-optimizer' }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SERVICE_NAME: ${{ inputs.service_name || 'iec-plan-optimizer' }}
+      SERVICE_DIR: ${{ inputs.service_dir || '.' }}
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+    outputs:
+      tag: ${{ steps.image_tag.outputs.tag }}
+    steps:
+      # Checkout workflows for build-action if it exists
+      - name: Checkout workflows
+        uses: actions/checkout@v5
+        with:
+          path: workflows
+          sparse-checkout: .github
+        continue-on-error: true
+      
+      # Checkout the actual code to build
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          path: code
+
+      # Generate tag if not provided
+      - name: Determine image tag
+        id: image_tag
+        uses: skyhook-io/determine-image-tag@v1
+        with:
+          service_name: ${{ env.SERVICE_NAME }}
+          custom_tag: ${{ inputs.tag }}
+          tag_format: branch-date-counter
+          include_counter: true
+          working_directory: code
+          branch_ref: ${{ inputs.ref || github.ref }}
+      
+      # Check if build-action exists and use it
+      - name: Check for build-action
+        id: check_build_action
+        shell: bash
+        run: |
+          if [ -f "workflows/.github/actions/build-action/action.yml" ] || [ -f "workflows/.github/actions/build-action/action.yaml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      # Use build-action if it exists
+      - name: Build with custom action
+        if: steps.check_build_action.outputs.exists == 'true'
+        uses: ./workflows/.github/actions/build-action
+        with:
+          service_dir: ${{ env.SERVICE_DIR }}
+          service_name: ${{ env.SERVICE_NAME }}
+          working_directory: code
+
+      # Authenticate to cloud provider and login to container registry
+      - name: Authenticate and login to registry
+        uses: skyhook-io/cloud-login@v1
+        with:
+          image: ${{ inputs.image }}
+          login_to_container_registry: true
+          # Pass auth credentials - cloud-login will use what's needed based on provider and ignore the rest.
+          # You can remove unused credentials if you don't need them.
+          # If different credentials are needed for different services, you can use the following format:
+          # gcp_credentials_json: ${{ secrets[format('GCP_CREDENTIALS_%s', env.SERVICE_NAME)] || secrets.GCP_CREDENTIALS }}
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # GCP credentials (used when provider == 'gcp')
+          gcp_credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          # Azure credentials (used when provider == 'azure')
+          azure_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          azure_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+          # GitHub credentials (used when provider == 'github')
+          github_token: ${{ github.token }}
+          # Docker Hub credentials (used when provider == 'dockerhub')
+          dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Build and push Docker image
+      - name: Build and push Docker image
+        uses: skyhook-io/docker-build-push-action@v1
+        with:
+          context: code
+          dockerfile: code/${{ env.SERVICE_DIR }}/Dockerfile
+          image: ${{ inputs.image }}
+          base_tag: ${{ steps.image_tag.outputs.tag }}
+          tag_latest_on_default_branch: 'true'
+          tag_sha: 'true'
+      
+      # Create git tag/release
+      - name: Tag release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: code
+        run: |
+          gh release create "${{ steps.image_tag.outputs.tag }}" \
+            --target "${{ steps.image_tag.outputs.commit_hash }}" \
+            --title "${{ steps.image_tag.outputs.tag }}" \
+            --notes "Built service: ${{ env.SERVICE_NAME }}" \
+            --prerelease

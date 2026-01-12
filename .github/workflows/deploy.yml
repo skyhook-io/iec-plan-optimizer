@@ -1,0 +1,127 @@
+# Deploy Workflow
+# Handles deployment to Kubernetes clusters with support for ArgoCD and kubectl
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: string
+      tag:
+        description: 'Image tag to deploy'
+        required: true
+        type: string
+      cloud_provider_account_location_cluster:
+        description: "The cloud provider, account/project, location and cluster name (e.g. 'gcp/my-project/us-central1/my-cluster' or 'aws/123456789/us-east-1/my-cluster')"
+        required: true
+        type: string
+      deploy_config_source:
+        description: |
+          Deployment source ([<repo>][@<ref>][:<path>]), e.g. KoalaOps/deployment@main:services/payment.
+          If not set, uses current repository, default (main/master) branch, repo root path.
+          Examples: @my-branch, :services/payment, Acme/deployments@main:services/api
+          See https://github.com/skyhook-io/parse-deploy-config-source for more details.
+        required: false
+        type: string
+        default: ''
+      service_name:
+        description: 'Service name'
+        required: false
+        type: string
+        default: iec-plan-optimizer
+      image:
+        description: 'Full image URL without tag (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/my-service)'
+        required: false
+        type: string
+        default: 'ghcr.io/skyhook-io/iec-plan-optimizer'
+      env_files_patches:
+        description: 'JSON object mapping file paths to key-value pairs (can be base64 encoded)'
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      tag:
+        type: string
+        required: true
+      cloud_provider_account_location_cluster:
+        type: string
+        required: true
+      deploy_config_source:
+        type: string
+        required: false
+        default: ''
+      service_name:
+        type: string
+        required: false
+        default: iec-plan-optimizer
+      image:
+        type: string
+        required: false
+      env_files_patches:
+        type: string
+        required: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Parse cloud provider and cluster configuration
+        uses: skyhook-io/parse-cloud-provider-cluster@v1
+        id: cloud-provider-cluster
+        with:
+          cloud_provider_cluster: ${{ inputs.cloud_provider_account_location_cluster }}
+
+      - name: Parse deployment config source
+        uses: skyhook-io/parse-deploy-config-source@v1
+        id: deploy_source
+        with:
+          source: ${{ inputs.deploy_config_source }}
+          environment: ${{ inputs.environment }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.deploy_source.outputs.ref }}
+      
+      - name: Apply env file patches
+        uses: skyhook-io/patch-env-files@v1
+        if: inputs.env_files_patches != ''
+        with:
+          patches: ${{ inputs.env_files_patches }}
+          path: ${{ steps.deploy_source.outputs.overlay_dir }}
+
+      - name: Authenticate with cloud provider and setup kubectl
+        uses: skyhook-io/cloud-login@v1
+        with:
+          provider: ${{ steps.cloud-provider-cluster.outputs.provider }}
+          account: ${{ steps.cloud-provider-cluster.outputs.account }}
+          location: ${{ steps.cloud-provider-cluster.outputs.location }}
+          cluster: ${{ steps.cloud-provider-cluster.outputs.cluster }}
+
+      - name: Deploy to Kubernetes
+        uses: skyhook-io/kustomize-deploy@v1
+        id: deploy
+        with:
+          overlay_dir: ${{ steps.deploy_source.outputs.overlay_dir }}
+          service_name: ${{ inputs.service_name }}
+          image: ${{ inputs.image }}
+          tag: ${{ inputs.tag }}
+          environment: ${{ inputs.environment }}
+
+      - name: Wait for deployment to complete
+        uses: skyhook-io/wait-for-deployment@v1
+        continue-on-error: true
+        with:
+          namespace: ${{ steps.deploy.outputs.namespace }}
+          workloads_json: ${{ steps.deploy.outputs.workloads_json }}

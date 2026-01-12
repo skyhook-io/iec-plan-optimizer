@@ -1,0 +1,58 @@
+# Release Workflow
+# Automated CI/CD pipeline triggered on push to main branch
+
+name: Release
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  image_tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Determine image tag
+        id: tag
+        uses: skyhook-io/determine-image-tag@v1
+        with:
+          tag_format: branch-date-counter
+          include_counter: true
+
+  build:
+    needs: image_tag
+    uses: ./.github/workflows/build_image.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+    with:
+      service_name: iec-plan-optimizer
+      tag:          ${{ needs.image_tag.outputs.tag }}
+      ref:          ${{ github.sha }}
+
+  deploy:
+    needs: [image_tag, build]
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
+    permissions:
+      contents: "write"
+      id-token: "write"
+    with:
+      environment: prod
+      tag: ${{ needs.image_tag.outputs.tag }}
+      image: ghcr.io/skyhook-io/iec-plan-optimizer
+      service_name: iec-plan-optimizer
+      cloud_provider_account_location_cluster: aws/982081053473/us-east-1/us-east-1-prod
+      deploy_config_source: ""
+

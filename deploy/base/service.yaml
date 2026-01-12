@@ -2,14 +2,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: iec-plan-optimizer
-  labels:
-    app: iec-plan-optimizer
 spec:
-  type: ClusterIP
   ports:
     - port: 80
       targetPort: 3000
       protocol: TCP
       name: http
   selector:
-    app: iec-plan-optimizer
+    app.kubernetes.io/name: iec-plan-optimizer

@@ -1,0 +1,81 @@
+# Build and Deploy Workflow
+# Orchestrates the complete build and deployment process
+
+name: Build and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: string
+      tag:
+        description: 'Image tag (optional, auto-generates if empty)'
+        required: false
+        type: string
+      cloud_provider_account_location_cluster:
+        description: "The cloud provider, account/project, location and cluster name (e.g. 'gcp/my-project/us-central1/my-cluster' or 'aws/123456789/us-east-1/my-cluster')"
+        required: true
+        type: string
+      deploy_config_source:
+        description: |
+          Deployment source ([<repo>][@<ref>][:<path>]), e.g. KoalaOps/deployment@main:services/payment.
+          If not set, uses current repository, default (main/master) branch, repo root path.
+          Examples: @my-branch, :services/payment, Acme/deployments@main:services/api
+          See https://github.com/skyhook-io/parse-deploy-config-source for more details.
+        required: false
+        type: string
+      service_name:
+        description: 'Service name (for multi-service repos)'
+        required: false
+        type: string
+        default: iec-plan-optimizer
+      service_dir:
+        description: 'Service directory (for multi-service repos, without leading/trailing slashes, e.g. "apps/agent")'
+        required: false
+        type: string
+      image:
+        description: 'Full image URL without tag (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/my-service)'
+        required: false
+        type: string
+        default: 'ghcr.io/skyhook-io/iec-plan-optimizer'
+      env_files_patches:
+        description: 'JSON object mapping file paths to key-value pairs (can be base64 encoded)'
+        required: false
+        type: string
+      ref:
+        description: 'Git ref to build from'
+        required: false
+        type: string
+
+jobs:
+  build:
+    uses: ./.github/workflows/build_image.yml
+    with:
+      tag: ${{ inputs.tag }}
+      ref: ${{ inputs.ref }}
+      service_name: ${{ inputs.service_name }}
+      service_dir: ${{ inputs.service_dir }}
+      image: ${{ inputs.image }}
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+    secrets: inherit
+
+  deploy:
+    needs: [build]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+      tag: ${{ needs.build.outputs.tag }}
+      cloud_provider_account_location_cluster: ${{ inputs.cloud_provider_account_location_cluster }}
+      service_name: ${{ inputs.service_name }}
+      image: ${{ inputs.image }}
+      env_files_patches: ${{ inputs.env_files_patches }}
+      deploy_config_source: ${{ inputs.deploy_config_source }}
+    permissions:
+      contents: write
+      id-token: write
+    secrets: inherit
