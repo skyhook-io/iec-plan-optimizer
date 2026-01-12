@@ -1,0 +1,19 @@
+# Patches Ingress with cert-manager annotations and TLS spec template.
+# cert-manager.io/cluster-issuer tells cert-manager which issuer to use for certificate creation.
+#
+# Placeholders replaced by Kustomize at build time:
+# - HOSTNAME_PLACEHOLDER: Set per environment in environment-values.env (e.g., INGRESS_HOST=myservice.example.com)
+# - TLS_SECRET_NAME_PLACEHOLDER: Auto-set to iec-plan-optimizer-tls-cert, rarely needs modification
+#
+# Common customizations: Change issuer to letsencrypt-staging, or add cert-manager.io/common-name.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: iec-plan-optimizer
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  tls:
+  - hosts:
+    - HOSTNAME_PLACEHOLDER
+    secretName: TLS_SECRET_NAME_PLACEHOLDER

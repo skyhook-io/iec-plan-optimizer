@@ -1,0 +1,12 @@
+# Kustomize replacement: Injects HOSTNAME_PLACEHOLDER from configmap into Ingress spec.rules.host at build time.
+# Replaces the placeholder with the actual hostname per environment.
+source:
+  kind: ConfigMap
+  name: iec-plan-optimizer-environment-values
+  fieldPath: data.HOSTNAME_PLACEHOLDER
+targets:
+- select:
+    kind: Ingress
+    name: iec-plan-optimizer
+  fieldPaths:
+    - spec.rules.[host=HOSTNAME_PLACEHOLDER].host

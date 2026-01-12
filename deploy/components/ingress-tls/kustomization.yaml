@@ -1,0 +1,18 @@
+# Adds TLS configuration to Ingress using cert-manager with Let's Encrypt.
+# Alternative approach: Use overlay-specific patches in deploy/overlays/<env>/patches/.
+#
+# INGRESS_TLS_SECRET_NAME: K8s secret name where cert-manager stores the TLS certificate.
+#   Default: iec-plan-optimizer-tls-cert (auto-created by cert-manager)
+#   Rarely needs modification - only change if using a custom TLS secret setup.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+configMapGenerator:
+- behavior: merge
+  name: iec-plan-optimizer-environment-values
+  literals:
+  - INGRESS_TLS_SECRET_NAME=iec-plan-optimizer-tls-cert
+patches:
+ - path: ./add-cert-annotations-patch.yaml
+replacements:
+ - path: ./tls-host-replacement.yaml
+ - path: ./tls-secret-name-replacement.yaml
