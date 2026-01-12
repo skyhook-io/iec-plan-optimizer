@@ -67,7 +67,18 @@ export function Instructions() {
                   <p className="font-medium">{t(step.titleKey)}</p>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {t(step.detailKey)}
+                  {index === 0 ? (
+                    <a
+                      href="https://www.iec.co.il"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      {t(step.detailKey)}
+                    </a>
+                  ) : (
+                    t(step.detailKey)
+                  )}
                 </p>
                 {step.hasDirectLink && (
                   <div className="mt-2 space-y-2">

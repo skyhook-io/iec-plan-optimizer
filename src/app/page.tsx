@@ -9,6 +9,7 @@ import { CsvUploader } from '@/components/CsvUploader';
 import { Instructions } from '@/components/Instructions';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { NoSmartMeterCalculator } from '@/components/NoSmartMeterCalculator';
+import { ElectricityMarketExplainer } from '@/components/ElectricityMarketExplainer';
 import { PLANS_LAST_UPDATED } from '@/data/plans';
 import { cn } from '@/lib/utils';
 
@@ -103,6 +104,16 @@ export default function HomePage() {
               </p>
             </motion.div>
           ))}
+        </motion.div>
+
+        {/* Market Explainer */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mx-auto mt-8 max-w-2xl"
+        >
+          <ElectricityMarketExplainer />
         </motion.div>
 
         {/* Mode Toggle */}

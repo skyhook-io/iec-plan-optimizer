@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -10,6 +10,9 @@ import {
   Calendar,
   MapPin,
   User,
+  Filter,
+  Gauge,
+  Banknote,
 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { useAppStore } from '@/lib/store';
@@ -19,13 +22,29 @@ import { TopPicksComparison } from '@/components/TopPicksComparison';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PLANS_LAST_UPDATED } from '@/data/plans';
+import { Badge } from '@/components/ui/badge';
+import { PLANS_LAST_UPDATED, IEC_BASE_RATE, VAT_RATE } from '@/data/plans';
+import { formatNIS } from '@/lib/calculator';
+import { cn } from '@/lib/utils';
 
 export default function ResultsPage() {
   const router = useRouter();
   const { t, language, isRtl } = useI18n();
   const { results, usageData, reset } = useAppStore();
   const [isHydrated, setIsHydrated] = useState(false);
+  const [selectedProviders, setSelectedProviders] = useState<Set<string>>(new Set());
+
+  // Get unique providers from results
+  const allProviders = useMemo(() => {
+    if (!results) return [];
+    const providers = new Set<string>();
+    results.forEach((r) => {
+      if (r.plan.id !== 'iec-baseline') {
+        providers.add(r.plan.provider);
+      }
+    });
+    return Array.from(providers);
+  }, [results]);
 
   // Wait for hydration before checking data
   useEffect(() => {
@@ -38,6 +57,25 @@ export default function ResultsPage() {
       router.push(language === 'en' ? '/en' : '/');
     }
   }, [results, usageData, router, isHydrated, language]);
+
+  const toggleProvider = (provider: string) => {
+    setSelectedProviders((prev) => {
+      const next = new Set(prev);
+      if (next.has(provider)) {
+        next.delete(provider);
+      } else {
+        next.add(provider);
+      }
+      return next;
+    });
+  };
+
+  const clearFilters = () => {
+    setSelectedProviders(new Set());
+  };
+
+  // Empty selection means show all
+  const hasActiveFilters = selectedProviders.size > 0;
 
   // Show loading state during hydration
   if (!isHydrated) {
@@ -64,9 +102,10 @@ export default function ResultsPage() {
       (1000 * 60 * 60 * 24)
   );
 
-  // Filter out IEC baseline for the main display
+  // Filter out IEC baseline and apply provider filter (empty = show all)
   const filteredResults = results.filter(
-    (r) => r.plan.id !== 'iec-baseline'
+    (r) => r.plan.id !== 'iec-baseline' &&
+      (selectedProviders.size === 0 || selectedProviders.has(r.plan.provider))
   );
 
   // Separate fixed and time-of-use plans
@@ -175,6 +214,65 @@ export default function ResultsPage() {
                     </div>
                   </div>
 
+                  {/* Usage Stats */}
+                  {(() => {
+                    const totalKwh = usageData.totalKwh;
+                    const monthlyKwh = (totalKwh / daysDiff) * 30;
+                    const annualKwh = (totalKwh / daysDiff) * 365;
+                    const annualCost = annualKwh * IEC_BASE_RATE * (1 + VAT_RATE);
+                    const monthlyCost = annualCost / 12;
+                    const isExtrapolated = daysDiff < 365;
+
+                    return (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <Gauge className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              {language === 'he' ? 'צריכה משוערת' : 'Est. Usage'}
+                              {isExtrapolated && '*'}
+                            </p>
+                            <p className="font-medium">
+                              {monthlyKwh.toFixed(0)} kWh/{language === 'he' ? 'חודש' : 'mo'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {annualKwh.toFixed(0)} kWh/{language === 'he' ? 'שנה' : 'yr'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <Banknote className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              {language === 'he' ? 'עלות צריכה משוערת' : 'Est. Usage Cost'}
+                              {isExtrapolated && '*'}
+                            </p>
+                            <p className="font-medium">
+                              {formatNIS(monthlyCost)}/{language === 'he' ? 'חודש' : 'mo'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatNIS(annualCost)}/{language === 'he' ? 'שנה' : 'yr'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground border-t pt-3">
+                          {isExtrapolated && (
+                            <span>
+                              {language === 'he'
+                                ? '* משוער על בסיס הנתונים שהועלו. '
+                                : '* Extrapolated from uploaded data. '}
+                            </span>
+                          )}
+                          {language === 'he'
+                            ? 'עלות צריכה בלבד, לא כולל חיובים קבועים.'
+                            : 'Usage cost only, excludes fixed charges.'}
+                        </p>
+                      </>
+                    );
+                  })()}
+
                 </CardContent>
               </Card>
             </motion.div>
@@ -191,6 +289,49 @@ export default function ResultsPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
+              {/* Provider Filter */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {language === 'he' ? 'סינון לפי ספק' : 'Filter by provider'}
+                  </span>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="text-xs h-6 px-2"
+                    >
+                      {language === 'he' ? 'נקה' : 'Clear'}
+                    </Button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {allProviders.map((provider) => {
+                    const isSelected = selectedProviders.has(provider);
+                    const providerHebrew = results?.find(
+                      (r) => r.plan.provider === provider
+                    )?.plan.providerHebrew;
+                    return (
+                      <Badge
+                        key={provider}
+                        variant={isSelected ? 'default' : 'outline'}
+                        className={cn(
+                          'cursor-pointer transition-colors',
+                          isSelected
+                            ? 'bg-primary hover:bg-primary/80'
+                            : 'hover:bg-muted'
+                        )}
+                        onClick={() => toggleProvider(provider)}
+                      >
+                        {language === 'he' ? providerHebrew : provider}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+
               <Tabs defaultValue="all">
                 <TabsList className="mb-6">
                   <TabsTrigger value="all">

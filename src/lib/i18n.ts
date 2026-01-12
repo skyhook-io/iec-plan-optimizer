@@ -27,7 +27,7 @@ export const translations = {
     // Instructions
     instructionsTitle: 'איך להוריד את נתוני הצריכה?',
     instructionsStep1: 'התחבר לאתר חברת החשמל',
-    instructionsStep1Detail: 'www.iec.co.il או באפליקציה',
+    instructionsStep1Detail: 'www.iec.co.il',
     instructionsStep2: 'נווט למצב צריכה עדכני',
     instructionsStep2Detail: 'לאחר התחברות, לחץ על הקישור הישיר או נווט ידנית:',
     instructionsStep2Path: 'פעולות ← מחשבוני צריכה ← לנתוני הצריכה שלך ← מצב צריכה עדכני',
@@ -119,7 +119,7 @@ export const translations = {
     // Instructions
     instructionsTitle: 'How to download your usage data?',
     instructionsStep1: 'Log in to IEC website',
-    instructionsStep1Detail: 'www.iec.co.il or the mobile app',
+    instructionsStep1Detail: 'www.iec.co.il',
     instructionsStep2: 'Navigate to Current Consumption',
     instructionsStep2Detail: 'After signing in, click the direct link or navigate manually:',
     instructionsStep2Path: 'Actions → Consumption Calculators → Your Consumption Data → Current Status',

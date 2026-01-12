@@ -229,50 +229,33 @@ export const electricityPlans: ElectricityPlan[] = [
   // Hot Energy (הוט אנרג'י)
   // ===========================================
   {
-    id: 'hot-24-7',
-    provider: 'Hot Energy',
-    providerHebrew: 'הוט אנרג\'י',
-    planName: 'Saving 24/7',
-    planNameHebrew: 'חוסכים 24/7',
-    requiresSmartMeter: false,
-    discountWindows: [
-      { days: ALL_DAYS, startHour: 0, endHour: 24, discount: 0.05 },
-    ],
-    defaultDiscount: 0.05,
-    requiresMembership: {
-      type: 'other',
-      descriptionHebrew: 'ללקוחות הוט אנרג\'י',
-      descriptionEnglish: 'For Hot Energy customers',
-    },
-    conditionsHebrew: ['ללא צורך במונה חכם', 'ללקוחות הוט אנרג\'י'],
-    sourceUrl: 'https://www.hot.net.il/heb/hotenergy/',
-    lastUpdated: PLANS_LAST_UPDATED,
-  },
-  {
     id: 'hot-fixed',
     provider: 'Hot Energy',
     providerHebrew: 'הוט אנרג\'י',
-    planName: 'Fixed Discount HOT',
-    planNameHebrew: 'חוסכים קבוע HOT',
+    planName: 'Fixed Discount',
+    planNameHebrew: 'חוסכים קבוע',
     requiresSmartMeter: false,
     discountWindows: [
-      { days: ALL_DAYS, startHour: 0, endHour: 24, discount: 0.07 },
+      { days: ALL_DAYS, startHour: 0, endHour: 24, discount: 0.06 },
     ],
-    defaultDiscount: 0.07,
-    maxMonthlySavings: 100, // Capped at 100 NIS/month
+    defaultDiscount: 0.06,
+    discountRange: {
+      min: 0.05,
+      max: 0.07,
+      minLabelHebrew: 'לקוחות חדשים',
+      minLabelEnglish: 'New customers',
+      maxLabelHebrew: 'ללקוחות HOT/NEXT/הוט מובייל',
+      maxLabelEnglish: 'HOT/NEXT/Hot Mobile customers',
+    },
+    maxMonthlySavings: 100,
     requiresMembership: {
       type: 'tv',
-      descriptionHebrew: 'ללקוחות HOT/NEXT/הוט מובייל',
-      descriptionEnglish: 'For HOT/NEXT/Hot Mobile customers',
+      descriptionHebrew: 'הנחה גבוהה יותר ללקוחות HOT/NEXT/הוט מובייל',
+      descriptionEnglish: 'Higher discount for HOT/NEXT/Hot Mobile customers',
     },
-    conditions: [
-      'Max 100 NIS/month',
-      'For HOT/NEXT/Hot Mobile customers',
-      'No smart meter required',
-    ],
     conditionsHebrew: [
+      '5% לכולם, 7% ללקוחות HOT/NEXT/הוט מובייל',
       'עד 100 ש"ח בחודש',
-      'ללקוחות HOT/NEXT/הוט מובייל',
       'ללא צורך במונה חכם',
     ],
     sourceUrl: 'https://www.hot.net.il/heb/hotenergy/',
@@ -364,7 +347,7 @@ export const electricityPlans: ElectricityPlan[] = [
   {
     id: 'bezeq-24-7',
     provider: 'Bezeq Energy',
-    providerHebrew: 'בזק אנרג\'יה',
+    providerHebrew: 'בזק energy',
     planName: 'Smart Saver 24/7',
     planNameHebrew: 'חוסכים חכם 24/7',
     requiresSmartMeter: false,
@@ -379,7 +362,7 @@ export const electricityPlans: ElectricityPlan[] = [
   {
     id: 'bezeq-day',
     provider: 'Bezeq Energy',
-    providerHebrew: 'בזק אנרג\'יה',
+    providerHebrew: 'בזק energy',
     planName: 'Smart Daytime Saver',
     planNameHebrew: 'חוסכים חכם ביום',
     requiresSmartMeter: true,
@@ -394,7 +377,7 @@ export const electricityPlans: ElectricityPlan[] = [
   {
     id: 'bezeq-night',
     provider: 'Bezeq Energy',
-    providerHebrew: 'בזק אנרג\'יה',
+    providerHebrew: 'בזק energy',
     planName: 'Smart Nighttime Saver',
     planNameHebrew: 'חוסכים חכם בלילה',
     requiresSmartMeter: true,

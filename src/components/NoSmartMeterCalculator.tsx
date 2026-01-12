@@ -40,6 +40,9 @@ export function NoSmartMeterCalculator({ onUploadClick }: NoSmartMeterCalculator
         let isTiered = false;
 
         // Check if this is a bill-based tiered plan
+        let minSavings: number | undefined;
+        let maxSavings: number | undefined;
+
         if (plan.billBasedTiers && plan.billBasedTiers.length > 0) {
           // Get discount based on monthly bill amount
           discount = getDiscountForBillAmount(monthlyBill, plan.billBasedTiers);
@@ -51,12 +54,24 @@ export function NoSmartMeterCalculator({ onUploadClick }: NoSmartMeterCalculator
           savings = yearlyCost * discount;
         }
 
+        // Calculate savings range for plans with discountRange
+        if (plan.discountRange) {
+          minSavings = yearlyCost * plan.discountRange.min;
+          maxSavings = yearlyCost * plan.discountRange.max;
+        }
+
         // Apply monthly cap if exists
         if (plan.maxMonthlySavings) {
           const maxYearlySavings = plan.maxMonthlySavings * 12;
           if (savings > maxYearlySavings) {
             savingsCapped = true;
             savings = maxYearlySavings;
+          }
+          if (minSavings !== undefined && minSavings > maxYearlySavings) {
+            minSavings = maxYearlySavings;
+          }
+          if (maxSavings !== undefined && maxSavings > maxYearlySavings) {
+            maxSavings = maxYearlySavings;
           }
         }
 
@@ -66,6 +81,8 @@ export function NoSmartMeterCalculator({ onUploadClick }: NoSmartMeterCalculator
           savings,
           savingsCapped,
           isTiered,
+          minSavings,
+          maxSavings,
           newYearlyCost: yearlyCost - savings,
         };
       })
@@ -209,7 +226,10 @@ export function NoSmartMeterCalculator({ onUploadClick }: NoSmartMeterCalculator
                   {item.plan.requiresMembership && !item.plan.discountRange && '†'}
                 </Badge>
                 <p className="text-sm font-medium text-green-600 dark:text-green-400 mt-1">
-                  {language === 'he' ? 'חיסכון' : 'Save'} {formatNIS(item.savings)}
+                  {language === 'he' ? 'חיסכון' : 'Save'}{' '}
+                  {item.minSavings !== undefined && item.maxSavings !== undefined
+                    ? `${formatNIS(item.minSavings)}-${formatNIS(item.maxSavings)}`
+                    : formatNIS(item.savings)}
                   {language === 'he' ? '/שנה' : '/yr'}
                 </p>
               </div>

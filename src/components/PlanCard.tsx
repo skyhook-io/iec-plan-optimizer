@@ -40,6 +40,12 @@ export function PlanCard({ result, rank, isRecommended, usageData }: PlanCardPro
   const hasMembership = !!plan.requiresMembership;
   const hasDiscountRange = !!plan.discountRange;
 
+  // Calculate savings range for plans with discountRange
+  const savingsRange = hasDiscountRange ? {
+    min: baselineCost * plan.discountRange!.min,
+    max: baselineCost * plan.discountRange!.max,
+  } : null;
+
   // For fixed plans, get the main discount from the first discount window
   // For time-of-use plans, show "Time-based" badge
   // For tiered plans, show the effective discount
@@ -78,12 +84,12 @@ export function PlanCard({ result, rank, isRecommended, usageData }: PlanCardPro
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rank * 0.1 }}
-      layout
     >
       <Card
         dir={isRtl ? 'rtl' : 'ltr'}
         className={cn(
-          'relative overflow-hidden transition-shadow hover:shadow-lg cursor-pointer',
+          'relative overflow-hidden transition-shadow hover:shadow-lg cursor-pointer flex flex-col',
+          !isExpanded && 'min-h-[420px]',
           isRecommended && 'border-primary ring-2 ring-primary/20',
           isExpanded && 'ring-2 ring-primary/10'
         )}
@@ -131,10 +137,14 @@ export function PlanCard({ result, rank, isRecommended, usageData }: PlanCardPro
               <span className="text-sm font-medium">{t('annualSavings')}</span>
             </div>
             <p className="mt-1 text-3xl font-bold text-green-700 dark:text-green-400">
-              {formatNIS(savings)}
+              {savingsRange
+                ? `${formatNIS(savingsRange.min)}-${formatNIS(savingsRange.max)}`
+                : formatNIS(savings)}
             </p>
             <p className="text-sm text-green-600 dark:text-green-500">
-              {formatPercent(savingsPercent)} {t('discount')}
+              {hasDiscountRange
+                ? `${formatPercent(plan.discountRange!.min * 100)}-${formatPercent(plan.discountRange!.max * 100)}`
+                : formatPercent(savingsPercent)} {t('discount')}
             </p>
             {result.savingsCapped && (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
@@ -161,7 +171,11 @@ export function PlanCard({ result, rank, isRecommended, usageData }: PlanCardPro
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-muted-foreground">{t('withPlan')}</p>
-              <p className="text-lg font-semibold">{formatNIS(discountedCost)}</p>
+              <p className="text-lg font-semibold">
+                {savingsRange
+                  ? `${formatNIS(baselineCost - savingsRange.max)}-${formatNIS(baselineCost - savingsRange.min)}`
+                  : formatNIS(discountedCost)}
+              </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">{t('currentCost')}</p>

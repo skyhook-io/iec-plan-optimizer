@@ -81,6 +81,13 @@ function TopPickCard({ result, index, language, isRtl, usageData }: TopPickCardP
   const conditions = language === 'he' ? plan.conditionsHebrew : plan.conditions;
   const hasMembership = !!plan.requiresMembership;
   const isTimeOfUse = plan.requiresSmartMeter;
+  const hasDiscountRange = !!plan.discountRange;
+
+  // Calculate savings range for plans with discountRange
+  const savingsRange = hasDiscountRange ? {
+    min: baselineCost * plan.discountRange!.min,
+    max: baselineCost * plan.discountRange!.max,
+  } : null;
 
   // Determine styling based on plan type
   const Icon = isTimeOfUse ? Clock : Zap;
@@ -170,10 +177,14 @@ function TopPickCard({ result, index, language, isRtl, usageData }: TopPickCardP
               </span>
             </div>
             <p className="text-2xl font-bold text-green-700 dark:text-green-400 mt-1">
-              {formatNIS(savings)}
+              {savingsRange
+                ? `${formatNIS(savingsRange.min)}-${formatNIS(savingsRange.max)}`
+                : formatNIS(savings)}
             </p>
             <p className="text-xs text-green-600 dark:text-green-500">
-              {formatPercent(savingsPercent)} {language === 'he' ? 'הנחה' : 'discount'}
+              {hasDiscountRange
+                ? `${formatPercent(plan.discountRange!.min * 100)}-${formatPercent(plan.discountRange!.max * 100)}`
+                : formatPercent(savingsPercent)} {language === 'he' ? 'הנחה' : 'discount'}
             </p>
           </div>
 
@@ -183,7 +194,11 @@ function TopPickCard({ result, index, language, isRtl, usageData }: TopPickCardP
               <p className="text-xs text-muted-foreground">
                 {language === 'he' ? 'עם התוכנית' : 'With plan'}
               </p>
-              <p className="font-semibold">{formatNIS(discountedCost)}</p>
+              <p className="font-semibold">
+                {savingsRange
+                  ? `${formatNIS(baselineCost - savingsRange.max)}-${formatNIS(baselineCost - savingsRange.min)}`
+                  : formatNIS(discountedCost)}
+              </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">
