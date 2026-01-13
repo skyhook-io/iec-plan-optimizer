@@ -14,6 +14,7 @@ COPY . .
 
 # Build the application
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_POSTHOG_KEY=phc_4SuuxYfkakRrgy25YxzG6JeiknFmBDjgz1pJVOzvML7
 RUN npm run build
 
 # Production stage

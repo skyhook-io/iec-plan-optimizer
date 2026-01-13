@@ -8,6 +8,7 @@ import { useAppStore } from '@/lib/store';
 import { parseIecCsv, validateUsageData } from '@/lib/csv-parser';
 import { calculateAllPlans, extrapolateToAnnual } from '@/lib/calculator';
 import { cn } from '@/lib/utils';
+import { trackAnalysisRun } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -79,6 +80,7 @@ export function CsvUploader({ onSuccess }: CsvUploaderProps) {
 
         setResults(annualResults);
         setIsCalculating(false);
+        trackAnalysisRun('csv_upload');
 
         if (onSuccess) {
           onSuccess();
@@ -111,6 +113,7 @@ export function CsvUploader({ onSuccess }: CsvUploaderProps) {
 
     setResults(annualResults);
     setIsCalculating(false);
+    trackAnalysisRun('stored_data');
 
     if (onSuccess) {
       onSuccess();
